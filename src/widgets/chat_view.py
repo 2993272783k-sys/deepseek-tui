@@ -15,7 +15,7 @@ class ChatView(Widget):
         await self._add_welcome()
 
     async def _add_welcome(self):
-        msg = MessageWidget("assistant", "你好！我是 DeepSeek 编程助手，有什么需要帮忙的吗？")
+        msg = MessageWidget("assistant", "Hello! I'm DeepSeek assistant. How can I help you?")
         await self._scroll.mount(msg)
         self._scroll.scroll_end(animate=False)
 

@@ -1,17 +1,20 @@
 from textual.widgets import Static
 from rich.text import Text
-from rich.panel import Panel
 from rich.console import Group
 
 
 class MessageWidget(Static):
-    """A single chat message (user or assistant)."""
+    """A single chat message, using Textual-native rendering."""
 
     def __init__(self, role: str, content: str = "", **kwargs):
         self.role = role
         self._content = content
         self._tool_items: list[tuple[str, str]] = []
         super().__init__("", **kwargs)
+        self._update_classes()
+
+    def _update_classes(self):
+        self.classes = f"message {self.role}"
 
     def update_content(self, text: str):
         self._content = text
@@ -22,29 +25,29 @@ class MessageWidget(Static):
         self.refresh()
 
     def add_tool_call(self, name: str, args_text: str):
-        self._tool_items.append(("call", f"\n>> {name}({args_text})"))
+        self._tool_items.append(("call", f">> {name}({args_text})"))
         self.refresh()
 
     def add_tool_result(self, result: str):
         preview = result[:200] + ("..." if len(result) > 200 else "")
-        self._tool_items.append(("result", f"\n=> {preview}"))
+        self._tool_items.append(("result", f"={preview}"))
         self.refresh()
 
     def render(self):
         elements = []
+        header = Text()
+        if self.role == "user":
+            header.append("You", style="bold green")
+        else:
+            header.append("DeepSeek", style="bold blue")
+
+        elements.append(header)
+
         if self._content:
-            elements.append(Text(self._content))
+            elements.append(Text("\n" + self._content))
+
         for ttype, text in self._tool_items:
             style = "bold cyan" if ttype == "call" else "dim white"
-            elements.append(Text(text, style=style))
+            elements.append(Text("\n" + text, style=style))
 
-        label = "你" if self.role == "user" else "DeepSeek"
-        label_style = "bold green" if self.role == "user" else "bold blue"
-        border_style = "green" if self.role == "user" else "blue"
-
-        return Panel(
-            Group(*elements) if elements else Text("(等待响应...)"),
-            title=Text(label, style=label_style),
-            border_style=border_style,
-            padding=(0, 1),
-        )
+        return Group(*elements) if elements else Text("(thinking...)")

@@ -62,6 +62,16 @@ class DeepSeekTUI(App):
     InputBar Input {
         width: 100%;
     }
+    .message {
+        margin: 0 0 1 0;
+        padding: 0 1;
+    }
+    .message.user {
+        background: #1e293b;
+    }
+    .message.assistant {
+        background: #1a1b26;
+    }
     """
 
     TITLE = "DeepSeek TUI"

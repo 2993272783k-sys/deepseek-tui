@@ -63,14 +63,16 @@ class DeepSeekTUI(App):
         width: 100%;
     }
     .message {
-        margin: 0 0 1 0;
+        margin: 0 1;
         padding: 0 1;
     }
     .message.user {
         background: #1e293b;
+        color: #a5d6ff;
     }
     .message.assistant {
-        background: #1a1b26;
+        background: #0f172a;
+        color: #e2e8f0;
     }
     """
 

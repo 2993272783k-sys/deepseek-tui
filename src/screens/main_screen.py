@@ -1,7 +1,6 @@
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, Static
-from textual.containers import VerticalScroll
 
 from ..widgets.chat_view import ChatView
 from ..widgets.input_bar import InputBar
@@ -13,7 +12,7 @@ from ..agent.agent import Agent, AgentEvent
 
 class MainScreen(Screen):
     BINDINGS = [
-        ("ctrl+q", "quit", "退出"),
+        ("ctrl+q", "quit"),
     ]
 
     def __init__(self, api_key: str, **kwargs):
@@ -21,55 +20,43 @@ class MainScreen(Screen):
         self.client = DeepSeekClient(api_key)
         self.registry = ToolRegistry()
         self.agent = Agent(self.client, self.registry)
-        self.current_msg: MessageWidget | None = None
+        self._msg: MessageWidget | None = None
 
     def compose(self):
         yield Header(show_clock=True)
-        yield Static(" DeepSeek TUI  |  Ctrl+Q 退出", id="status-bar")
+        yield Static(" DeepSeek TUI  |  Ctrl+Q quit", id="status-bar")
         yield ChatView()
         yield InputBar()
 
-    def on_mount(self):
-        pass
-
     def on_input_bar_submitted(self, event: InputBar.Submitted):
-        self.current_msg = None
-        self.run_worker(self._run_agent(event.text), exclusive=True)
+        self._msg = None
+        self.run_worker(self._run(event.text), exclusive=True)
 
     def action_quit(self):
-        async def _quit():
+        async def q():
             await self.client.close()
             self.app.exit()
-        self.run_worker(_quit(), exclusive=True)
+        self.run_worker(q(), exclusive=True)
 
-    async def _run_agent(self, user_message: str):
+    async def _run(self, text: str):
         chat = self.query_one(ChatView)
-        input_bar = self.query_one(InputBar)
-        input_bar.set_loading(True)
+        inp = self.query_one(InputBar)
+        inp.set_loading(True)
 
-        await chat.add_user_message(user_message)
-        msg = await chat.add_assistant_message()
-        self.current_msg = msg
+        await chat.add_message("user", text)
+        self._msg = await chat.add_message("assistant", "")
 
         try:
-            async for event in self.agent.run(user_message):
-                if event.type == "text_chunk":
-                    msg.append_content(event.data["text"])
-                elif event.type == "tool_start":
-                    name = event.data["name"]
-                    args = event.data["arguments"]
-                    args_str = ", ".join(f"{k}={v}" for k, v in args.items())
-                    msg.add_tool_call(name, args_str)
-                elif event.type == "tool_result":
-                    msg.add_tool_result(event.data["result"])
-                elif event.type == "error":
-                    msg.update_content(f"错误: {event.data['message']}")
-
+            async for ev in self.agent.run(text):
+                if ev.type == "text_chunk":
+                    self._msg.append_content(ev.data["text"])
+                elif ev.type == "tool_start":
+                    self._msg.add_tool_call(ev.data["name"], str(ev.data.get("arguments", "")))
+                elif ev.type == "tool_result":
+                    self._msg.add_tool_result(ev.data["result"])
         except DeepSeekError as e:
-            if self.current_msg:
-                self.current_msg.update_content(f"发生错误: {e}")
+            self._msg.update_content(f"[red]Error: {e}[/red]")
         except Exception as e:
-            if self.current_msg:
-                self.current_msg.update_content(f"遇到错误: {e}")
+            self._msg.update_content(f"[red]Error: {e}[/red]")
         finally:
-            input_bar.set_loading(False)
+            inp.set_loading(False)

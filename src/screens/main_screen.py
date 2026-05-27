@@ -1,6 +1,7 @@
 from textual.app import ComposeResult
 from textual.screen import Screen
 from textual.widgets import Header, Static
+from textual.containers import VerticalScroll
 
 from ..widgets.chat_view import ChatView
 from ..widgets.input_bar import InputBar
@@ -10,13 +11,6 @@ from ..tools.registry import ToolRegistry
 from ..agent.agent import Agent, AgentEvent
 
 
-class StatusBar(Static):
-    """Status bar showing current state."""
-
-    def render(self):
-        return " DeepSeek TUI  |  Ctrl+Q 退出"
-
-
 class MainScreen(Screen):
     BINDINGS = [
         ("ctrl+q", "quit", "退出"),
@@ -24,7 +18,6 @@ class MainScreen(Screen):
 
     def __init__(self, api_key: str, **kwargs):
         super().__init__(**kwargs)
-        self.api_key = api_key
         self.client = DeepSeekClient(api_key)
         self.registry = ToolRegistry()
         self.agent = Agent(self.client, self.registry)
@@ -32,13 +25,12 @@ class MainScreen(Screen):
 
     def compose(self):
         yield Header(show_clock=True)
-        yield StatusBar()
+        yield Static(" DeepSeek TUI  |  Ctrl+Q 退出", id="status-bar")
         yield ChatView()
         yield InputBar()
 
     def on_mount(self):
-        chat = self.query_one(ChatView)
-        self.run_worker(chat.add_welcome_message())
+        pass
 
     def on_input_bar_submitted(self, event: InputBar.Submitted):
         self.current_msg = None
@@ -78,6 +70,6 @@ class MainScreen(Screen):
                 self.current_msg.update_content(f"发生错误: {e}")
         except Exception as e:
             if self.current_msg:
-                self.current_msg.update_content(f"未预期错误: {e}")
+                self.current_msg.update_content(f"遇到错误: {e}")
         finally:
             input_bar.set_loading(False)

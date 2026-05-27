@@ -1,5 +1,22 @@
+import os
+
 from textual.app import App, ComposeResult
 from .screens.main_screen import MainScreen
+
+
+def load_env():
+    """Load .env file from project root."""
+    env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
+    if os.path.exists(env_path):
+        with open(env_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, _, val = line.partition("=")
+                key, val = key.strip(), val.strip().strip("\"'")
+                if key and not os.environ.get(key):
+                    os.environ[key] = val
 
 
 class DeepSeekTUI(App):
@@ -9,22 +26,33 @@ class DeepSeekTUI(App):
     Screen {
         background: #1a1b26;
     }
-
     Header {
         background: #24283b;
         color: #c0caf5;
     }
-
-    Footer {
+    #status-bar {
         background: #24283b;
-        color: #c0caf5;
-    }
-
-    StatusBar {
-        background: #24283b;
-        color: #c0caf5;
+        color: #565f89;
         height: 1;
         padding: 0 1;
+    }
+    ChatView {
+        height: 1fr;
+    }
+    #chat-scroll {
+        height: 100%;
+    }
+    ChatView VerticalScroll {
+        overflow-y: auto;
+    }
+    InputBar {
+        dock: bottom;
+        height: 3;
+        padding: 0 1;
+        background: #1a1b26;
+    }
+    InputBar Input {
+        width: 100%;
     }
     """
 
@@ -39,11 +67,12 @@ class DeepSeekTUI(App):
 
 
 def main():
+    load_env()
+
     import argparse
-    import os
 
     parser = argparse.ArgumentParser(description="DeepSeek TUI - 终端 AI 编程助手")
-    parser.add_argument("--api-key", help="DeepSeek API Key（也可通过 DEEPSEEK_API_KEY 环境变量设置）")
+    parser.add_argument("--api-key", help="DeepSeek API Key")
     args = parser.parse_args()
 
     api_key = args.api_key or os.environ.get("DEEPSEEK_API_KEY")

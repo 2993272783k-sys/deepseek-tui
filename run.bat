@@ -1,9 +1,14 @@
 @echo off
+chcp 65001 >nul
 cd /d "%~dp0"
-if exist .env (
-    for /f "tokens=1,* delims==" %%a in (.env) do (
-        if "%%a"=="DEEPSEEK_API_KEY" set DEEPSEEK_API_KEY=%%b
-    )
-)
+echo DeepSeek TUI 启动中...
 python main.py
-pause
+if errorlevel 1 (
+    echo.
+    echo 启动失败，按任意键查看详情...
+    pause >nul
+    cd /d "%~dp0"
+    python main.py --help
+    echo.
+    pause
+)

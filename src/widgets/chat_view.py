@@ -11,12 +11,12 @@ class ChatView(Widget):
         self._scroll = VerticalScroll(id="chat-scroll")
         yield self._scroll
 
-    def on_mount(self):
-        self._add_welcome()
+    async def on_mount(self):
+        await self._add_welcome()
 
-    def _add_welcome(self):
-        msg = MessageWidget("assistant", "你好！我是 **DeepSeek 编程助手**，有什么需要帮忙的吗？")
-        self._scroll.mount(msg)
+    async def _add_welcome(self):
+        msg = MessageWidget("assistant", "你好！我是 DeepSeek 编程助手，有什么需要帮忙的吗？")
+        await self._scroll.mount(msg)
         self._scroll.scroll_end(animate=False)
 
     async def add_user_message(self, content: str):

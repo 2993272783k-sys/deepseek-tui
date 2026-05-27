@@ -1,4 +1,12 @@
 import os
+import sys
+
+# 强制 UTF-8 编码，解决 Windows GBK 乱码/崩溃问题
+if sys.stdout.encoding and sys.stdout.encoding.upper() != "UTF-8":
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8")
+os.environ["PYTHONUTF8"] = "1"
 
 from textual.app import App, ComposeResult
 from .screens.main_screen import MainScreen

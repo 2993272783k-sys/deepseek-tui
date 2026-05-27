@@ -22,12 +22,12 @@ class MessageWidget(Static):
         self.refresh()
 
     def add_tool_call(self, name: str, args_text: str):
-        self._tool_items.append(("call", f"\n🔧 {name}({args_text})"))
+        self._tool_items.append(("call", f"\n>> {name}({args_text})"))
         self.refresh()
 
     def add_tool_result(self, result: str):
         preview = result[:200] + ("..." if len(result) > 200 else "")
-        self._tool_items.append(("result", f"\n📋 {preview}"))
+        self._tool_items.append(("result", f"\n=> {preview}"))
         self.refresh()
 
     def render(self):
@@ -43,7 +43,7 @@ class MessageWidget(Static):
         border_style = "green" if self.role == "user" else "blue"
 
         return Panel(
-            Group(*elements) if elements else Text("（等待响应...）"),
+            Group(*elements) if elements else Text("(等待响应...)"),
             title=Text(label, style=label_style),
             border_style=border_style,
             padding=(0, 1),
